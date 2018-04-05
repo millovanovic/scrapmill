@@ -46,21 +46,21 @@ class Asset:
 
 
 if __name__ == '__main__':
+    source = "https://www.avanza.se/borshandlade-produkter/warranter-torg/om-warranten.html/718871/mini-l-tesla-ava-28" # webpage where live data can be found
+    path = './TSLA.csv' # local path to store the data
+
+    tesla = Asset("TSLA")
+
     print "UTC: " + str(dt.datetime.utcnow())  # current universal time
+    exchange_opening_time = dt.time(9)
+    exchange_closing_time = dt.time(17, 30)
 
     scrape_freq = 10 # frequency in seconds
     scrapping_status = True
     while scrapping_status:
-
         current_local_time = dt.datetime.now()
 
-        exchange_opening_time = dt.time(9)
-        exchange_closing_time = dt.time(17, 30)
-
         if (current_local_time.isoweekday() < 6) and (exchange_opening_time <= current_local_time.time() <= exchange_closing_time):
-            source = "https://www.avanza.se/borshandlade-produkter/warranter-torg/om-warranten.html/718871/mini-l-tesla-ava-28"
-            path = './TSLA.csv'
-            tesla = Asset("TSLA")
             tesla.download_data(source)
             tesla.write_data(path)
 
