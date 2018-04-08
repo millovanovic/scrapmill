@@ -45,23 +45,41 @@ class Asset:
             print str(dt.datetime.now()) + ': Data saved.'
 
 
+def working_hours(current, opening, closing):
+    """A function that checks if the current time is inside the working hours."""
+    if (current.isoweekday() < 6) and (opening <= current.time() <= closing):
+        return True
+
+
 if __name__ == '__main__':
-    source = "https://www.avanza.se/borshandlade-produkter/warranter-torg/om-warranten.html/718871/mini-l-tesla-ava-28" # webpage where live data can be found
-    path = './TSLA.csv' # local path to store the data
+    # webpage where live data can be found
+    source = "https://www.avanza.se/borshandlade-produkter/warranter-torg/om-warranten.html/718871/mini-l-tesla-ava-28"
+    path = './TSLA.csv'  # local path to store data
+    tesla = Asset("TSLA")  # initiate asset instance
 
-    tesla = Asset("TSLA")
-
-    print "UTC: " + str(dt.datetime.utcnow())  # current universal time
     exchange_opening_time = dt.time(9)
     exchange_closing_time = dt.time(17, 30)
 
-    scrape_freq = 10 # frequency in seconds
+    print "UTC: " + str(dt.datetime.utcnow())  # current universal time
+
+    scrape_freq = 10  # frequency in seconds
     scrapping_status = True
     while scrapping_status:
         current_local_time = dt.datetime.now()
-
-        if (current_local_time.isoweekday() < 6) and (exchange_opening_time <= current_local_time.time() <= exchange_closing_time):
+        if working_hours(current_local_time, exchange_opening_time, exchange_closing_time):
             tesla.download_data(source)
             tesla.write_data(path)
-
             tm.sleep(scrape_freq)
+
+        else:
+            print "Now it is " + \
+                current_local_time.strftime(
+                    '%A, %x, %X') + " and the market is closed. The scrapping will continue as soon as the market opens."
+            current_plus_hour = current_local_time + dt.timedelta(hours=1)
+            current_plus_minute = current_local_time + dt.timedelta(minutes=1)
+            if working_hours(current_plus_minute, exchange_opening_time, exchange_closing_time):
+                tm.sleep(1)
+            elif working_hours(current_plus_hour, exchange_opening_time, exchange_closing_time):
+                tm.sleep(60)
+            else:
+                tm.sleep(3600)
