@@ -11,6 +11,7 @@ class Session:
     """A simple web session class."""
     HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.155 Safari/537.36',
                'Cache-Control': 'private, max-age=0, no-cache'}
+
     def __init__(self, name, url, usr, pwd):
         self.name = name
         self.sess = req.Session()
@@ -20,7 +21,13 @@ class Session:
 
     def login(self):
         form = {'j_username': self.usr, 'j_password': self.pwd}
-        request = self.sess.post(self.url + '/ab/handlelogin', data=form)
+        if self.name == 'Avanza':
+            url_login = self.url + '/ab/handlelogin'
+        else:
+            print "Unknown web session."
+            return False
+
+        request = self.sess.post(url_login, data=form)
 
         if request.status_code != req.codes.ok:
             print("Login failed.")
@@ -28,6 +35,7 @@ class Session:
 
         print("Login successful.")
         return True
+
 
 class Asset:
     """A simple asset class."""
@@ -41,19 +49,23 @@ class Asset:
         self.source = []
 
     def download_data(self, source, Session):
-        html_data = bs(Session.sess.get(source, headers=Session.HEADERS).content, 'html.parser')
+        html_data = bs(Session.sess.get(
+            source, headers=Session.HEADERS).content, 'html.parser')
         print(str(dt.datetime.now()) + ": Data downloaded.")
 
-        html_data = html_data.find(class_='cleanList floatList clearFix quoteBar ')
+        html_data = html_data.find(
+            class_='cleanList floatList clearFix quoteBar ')
 
         buy_html = str(html_data.find_all(
             class_='buyPrice SText bold')).replace(',', '.')
-        print buy_html
+        # print buy_html
+
         sell_html = str(html_data.find_all(
             class_='sellPrice SText bold')).replace(',', '.')
-        print sell_html
+        # print sell_html
+
         time_html = str(html_data.find_all(class_='updated SText bold'))
-        print time_html
+        # print time_html
 
         buy_price = float(re.findall('">(.*)</', buy_html)[0])
         sell_price = float(re.findall('">(.*)</', sell_html)[0])
@@ -80,14 +92,15 @@ def working_hours(current, opening, closing):
 
 if __name__ == '__main__':
     url = 'https://www.avanza.se'
-    usr = os.environ['AVA_USR'] #assuming that credentials are saved in environment variables
-    pwd = os.environ['AVA_PWD'] #assuming that credentials are saved in environment variables
+    # assuming that credentials are saved in environment variables
+    usr = os.environ['AVA_USR']
+    # assuming that credentials are saved in environment variables
+    pwd = os.environ['AVA_PWD']
 
     avanza = Session('Avanza', url, usr, pwd)
     avanza.login()
 
-
-    source = "https://www.avanza.se/borshandlade-produkter/warranter-torg/om-warranten.html/718871/mini-l-tesla-ava-28" # webpage where
+    source = "https://www.avanza.se/borshandlade-produkter/warranter-torg/om-warranten.html/718871/mini-l-tesla-ava-28"  # webpage where
     path = './TSLA.csv'  # local path to store data
     tesla = Asset("TSLA")  # initiate asset instance
 
