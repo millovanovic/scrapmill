@@ -5,37 +5,7 @@ import requests as req
 import datetime as dt
 import time as tm
 from bs4 import BeautifulSoup as bs
-
-
-class Session:
-    """A simple web session class."""
-    HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.155 Safari/537.36',
-               'Cache-Control': 'private, max-age=0, no-cache'}
-
-    def __init__(self, name, url, usr, pwd):
-        self.name = name
-        self.sess = req.Session()
-        self.url = url
-        self.usr = usr
-        self.pwd = pwd
-
-    def login(self):
-        form = {'j_username': self.usr, 'j_password': self.pwd}
-        if self.name == 'Avanza':
-            url_login = self.url + '/ab/handlelogin'
-        else:
-            print "Unknown web session."
-            return False
-
-        request = self.sess.post(url_login, data=form)
-
-        if request.status_code != req.codes.ok:
-            print("Login failed.")
-            return False
-
-        print("Login successful.")
-        return True
-
+import pandas as pd
 
 class Asset:
     """A simple asset class."""
@@ -72,7 +42,7 @@ class Asset:
         time_price = re.findall('">(.*)</', time_html)[0]
 
         self.source = source
-        self.time = time_price
+        self.time = pd.to_datetime(time_price)
         self.buy = buy_price
         self.sell = sell_price
         self.spread = sell_price - buy_price
@@ -91,18 +61,11 @@ def working_hours(current, opening, closing):
 
 
 if __name__ == '__main__':
-    tm.sleep(60)
+    tm.sleep(3)
     url = 'https://www.avanza.se'
-    # assuming that credentials are saved in environment variables
-    usr = os.environ['AVA_USR']
-    # assuming that credentials are saved in environment variables
-    pwd = os.environ['AVA_PWD']
-
-    avanza = Session('Avanza', url, usr, pwd)
-    avanza.login()
-
+    
     source = "https://www.avanza.se/borshandlade-produkter/warranter-torg/om-warranten.html/718871/mini-l-tesla-ava-28"  # webpage where
-    path = '/home/pi/Projects/scrapmill/TSLA.csv'  # local path to store data
+    path = './TSLA.csv'  # local path to store data
     tesla = Asset("TSLA")  # initiate asset instance
 
     exchange_opening_time = dt.time(9)
@@ -112,12 +75,16 @@ if __name__ == '__main__':
 
     scrape_freq = 10  # frequency in seconds
     scrapping_status = True
+
+    time_stamp = pd.to_datetime(dt.datetime.now())
     while scrapping_status:
         current_local_time = dt.datetime.now()
         if working_hours(current_local_time, exchange_opening_time, exchange_closing_time):
             try:
                 tesla.download_data(source, avanza)
-                tesla.write_data(path)
+                if tesla.time != time_stamp:
+                	tesla.write_data(path)
+                	time_stamp = tesla.time
             except:
                 print("Data download failed.")
                 pass
