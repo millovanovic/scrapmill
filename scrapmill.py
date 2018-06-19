@@ -91,6 +91,7 @@ def working_hours(current, opening, closing):
 
 
 if __name__ == '__main__':
+    tm.sleep(60)
     url = 'https://www.avanza.se'
     # assuming that credentials are saved in environment variables
     usr = os.environ['AVA_USR']
@@ -101,7 +102,7 @@ if __name__ == '__main__':
     avanza.login()
 
     source = "https://www.avanza.se/borshandlade-produkter/warranter-torg/om-warranten.html/718871/mini-l-tesla-ava-28"  # webpage where
-    path = './TSLA.csv'  # local path to store data
+    path = '/home/pi/Projects/scrapmill/TSLA.csv'  # local path to store data
     tesla = Asset("TSLA")  # initiate asset instance
 
     exchange_opening_time = dt.time(9)
@@ -114,8 +115,12 @@ if __name__ == '__main__':
     while scrapping_status:
         current_local_time = dt.datetime.now()
         if working_hours(current_local_time, exchange_opening_time, exchange_closing_time):
-            tesla.download_data(source, avanza)
-            tesla.write_data(path)
+            try:
+                tesla.download_data(source, avanza)
+                tesla.write_data(path)
+            except:
+                print("Data download failed.")
+                pass
             tm.sleep(scrape_freq)
 
         else:
