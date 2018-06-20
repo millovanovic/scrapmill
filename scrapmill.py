@@ -18,9 +18,8 @@ class Asset:
         self.time = []
         self.source = []
 
-    def download_data(self, source, Session):
-        html_data = bs(Session.sess.get(
-            source, headers=Session.HEADERS).content, 'html.parser')
+    def download_data(self, source):
+        html_data = bs(req.get(source).content, 'html.parser')
         print(str(dt.datetime.now()) + ": Data downloaded.")
 
         html_data = html_data.find(
@@ -47,6 +46,8 @@ class Asset:
         self.sell = sell_price
         self.spread = sell_price - buy_price
 
+        print(str(self.time) + ": " + str(self.buy) + ".")
+
     def write_data(self, path):
         with open(path, 'a') as csv_file:
             writer = csv.writer(csv_file)
@@ -63,7 +64,7 @@ def working_hours(current, opening, closing):
 if __name__ == '__main__':
     tm.sleep(3)
     url = 'https://www.avanza.se'
-    
+
     source = "https://www.avanza.se/borshandlade-produkter/warranter-torg/om-warranten.html/718871/mini-l-tesla-ava-28"  # webpage where
     path = './TSLA.csv'  # local path to store data
     tesla = Asset("TSLA")  # initiate asset instance
@@ -81,7 +82,7 @@ if __name__ == '__main__':
         current_local_time = dt.datetime.now()
         if working_hours(current_local_time, exchange_opening_time, exchange_closing_time):
             try:
-                tesla.download_data(source, avanza)
+                tesla.download_data(source)
                 if tesla.time != time_stamp:
                 	tesla.write_data(path)
                 	time_stamp = tesla.time
